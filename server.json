@@ -1,0 +1,12 @@
+const express = require('express');
+const app = express();
+
+// Proxy para TODO
+app.get('/p/*', (req, res) => {
+    res.redirect('https://archive.org' + req.url.replace('/p/', '/'));
+});
+
+// Sirve tu HTML
+app.use(express.static('public'));
+
+app.listen(3000, () => console.log('Proxy en puerto 3000'));
