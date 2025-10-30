@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lan g="es">
+<head>
+<meta charset="utf-8">
+<title>CarPlayer - Tu Reproductor</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<style>
+@media (orientation: portrait){
+  body::before{
+    content:"GIRA EL MÓVIL";
+    position:fixed; inset:0; background:#000; color:#fff; z-index:9999;
+    display:flex; align-items:center; justify-content:center; font-size:10vw;
+  }
+}
+:root{
+  --accent:#000;
+  --bg:#000;
+  --btn:#222;
+  --text:#fff;
+  --panel-bg:#111;
+}
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+  font-family:system-ui,Arial;
+  color:var(--text);
+}
+body{
+  background:var(--bg);
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+#top{
+  flex:1;
+  display:flex;
+  gap:.5rem;
+  padding:.5rem;
+  min-height:0;
+}
+.panel{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  background:var(--panel-bg);
+  border-radius:1vh;
+  overflow:hidden;
+  min-height:0;
+  position:relative;
+}
+.panel h3{
+  display: none;
+}
+video{
+  width:100%;
+  flex:1;
+  background:#000;
+  outline:0;
+  min-height:0;
+  object-fit: cover;
+  transition: none !important;
+}
+#center{
+  background:#0005;
+  border-radius:90 h;
+  padding:1vh;
+  display:flex;
+  flex-direction:column;
+  gap:1vh;
+  min-width:36vh;
+  overflow-y:auto;
+  flex: 0 0 40%;
+  overflow-x: hidden;
+}
+.track{
+  display:flex;
+  align-items:center;
+  gap:1vh;
+  padding:1vh;
+  background:var(--btn);
+  border-radius:1vh;
+  cursor:pointer;
+  height:10vh;
+  flex-shrink:0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+.track img{
+  height:100%;
+  aspect-ratio:16/9;
+  object-fit:cover;
+  border-radius:1vh;
+  max-width: 20%;
+  flex-shrink: 0;
+}
+.track-info{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  gap:0.5vh;
+  min-width: 0;
+  overflow: hidden;
+}
+.track-title{
+  font-size:3.5vh;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width: 100%;
+}
+.track-genre{
+  font-size:2.5vh;
+  color:var(--accent);
+  opacity:0.8;
+}
+.track.active{
+  background:var(--accent);
+  color:#fff;
+  border: 3px solid #fff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+  transform: scale(1.02);
+  transition: all 0.3s ease;
+}
+.track.active .track-genre{
+  color:#fff;
+  opacity:1;
+  font-weight: bold;
+}
+.track.active .track-title{
+  font-weight: bold;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+}
+#bottom{
+  display:flex;
+  align-items:center;
+  gap:1vh;
+  padding:1vh;
+  background:#0005;
+  flex-shrink:0;
+}
+button{
+  flex:1;
+  height:12vh;
+  border:none;
+  border-radius:1.5vh;
+  background:var(--btn);
+  color:var(--text);
+  font-weight:700;
+  font-size:5vh;
+  cursor:pointer;
+  transition: background 0.3s;
+}
+button:hover{
+  background:var(--accent);
+  color:var(--text);
+}
+button:disabled{
+  opacity:.3;
+}
+#play {
+  background:var(--btn);
+  color:var(--text);
+}
+#play:hover {
+  background:var(--accent);
+  color:var(--text);
+}
+#progress{
+  height:3vh;
+  background:#444;
+  border-radius:1.5vh;
+  cursor:pointer;
+  margin:0 1vh;
+  flex-shrink:0;
+}
+#bar{
+  height:100%;
+  background:var(--accent);
+  border-radius:1.5vh;
+  width:0%;
+}
+#safeDrive{
+  display:flex;
+  align-items:center;
+  gap:1vh;
+  padding:1vh;
+  font-size:3vh;
+  flex-shrink:0;
+}
+#safeDrive input{
+  width:4vh;
+  height:4vh;
+}
+#filters{
+  display:flex;
+  gap:1vh;
+  padding:1vh;
+  background:#0005;
+  flex-wrap:wrap;
+  flex-shrink:0;
+  max-height:15vh;
+  overflow-y:auto;
+  overflow-x: hidden;
+}
+.filter-btn{
+  background:var(--btn);
+  color:var(--text);
+  border:none;
+  padding:1vh 2vh;
+  border-radius:1vh;
+  cursor:pointer;
+  font-size:2.5vh;
+  transition:all 0.3s;
+  white-space:nowrap;
+}
+.filter-btn.active{
+  background:var(--accent);
+  color:var(--text);
+}
+.filter-btn:hover{
+  background:var(--accent);
+  color:var(--text);
+}
+.audio-only #center {
+  flex: 1;
+}
+.audio-only .panel:first-child {
+  display: none;
+}
+#fullscreen-container {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #000;
+  z-index: 10000;
+  flex-direction: column;
+}
+#fullscreen-container.active {
+  display: flex;
+}
+#fullscreen-video {
+  width: 100%;
+  height: 100%;
+  background: #000;
+  object-fit: contain;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transition: none !important;
+}
+.video-landscape #fullscreen-video {
+  object-fit: cover;
+  object-position: center 25%;
+}
+.video-portrait #fullscreen-video {
+  object-fit: contain;
+}
+#fullscreen-controls {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 10001;
+  background: rgba(0,0,0,0.8);
+  padding: 10px 15px;
+  border-radius: 10px;
+  border: 1px solid var(--accent);
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out 2s;
+}
+#fullscreen-container.active #fullscreen-controls {
+  opacity: 1;
+  transition: opacity 0.5s ease-in-out 2s;
+}
+#fullscreen-container.active:hover #fullscreen-controls,
+#fullscreen-container.active #fullscreen-controls:hover {
+  opacity: 1;
+  transition: opacity 0.3s ease-in-out;
+}
+#fullscreen-controls button {
+  background: var(--accent);
+  color: var(--text);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  min-width: 40px;
+}
+#fullscreen-controls button:hover {
+  background: #333;
+}
+#loading {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0,0,0,0.8);
+  color: var(--accent);
+  padding: 20px;
+  border-radius: 10px;
+  z-index: 10002;
+  display: none;
+}
+#center::-webkit-scrollbar {
+  width: 8px;
+}
+#center::-webkit-scrollbar-track {
+  background: #222;
+  border-radius: 4px;
+}
+#center::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 4px;
+}
+#center::-webkit-scrollbar-thumb:hover {
+  background: #333;
+}
+</style>
+</head>
+<body>
+
+
+
+<div id="top">
+  <div class="panel">
+    <h3>VIDEO</h3>
+    <video id="vP" muted playsinline></video>
+  </div>
+  <div id="center"></div>
+</div>
+
+<div id="filters">
+  <button class="filter-btn active" data-genre="all">Todos</button>
+</div>
+
+<div id="progress"><div id="bar"></div></div>
+<div id="bottom">
+  <button id="prev">⏮</button>
+  <button id="play">▶</button>
+  <button id="next">⏭</button>
+  <button id="toggleMute">🔇</button>
+  <button id="fullscreen">⛶</button>
+</div>
+<div id="safeDrive">
+  <input type="checkbox" id="driving">
+  <label for="driving">Conduciendo (solo audio)</label>
+</div>
+
+<div id="fullscreen-container">
+  <video id="fullscreen-video" muted playsinline></video>
+  <div id="fullscreen-controls">
+    <button id="fs-prev">⏮</button>
+    <button id="fs-play">▶</button>
+    <button id="fs-next">⏭</button>
+    <button id="fs-mute">🔇</button>
+    <button id="fs-exit">Salir</button>
+  </div>
+</div>
+
+<style>
+/* Modo pantalla completa adaptado */
+.fullscreen-auto {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover; /* Rellena toda la pantalla sin deformar */
+  background: #000;
+  z-index: 9999;
+  transition: all 0.4s ease;
+}
+</style>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+  import { getDatabase, ref, set, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+
+  // --- Configuración Firebase ---
+  const firebaseConfig = {
+    apiKey: "TU_API_KEY",
+    authDomain: "TU_AUTH_DOMAIN",
+    databaseURL: "https://music-76fda-default-rtdb.firebaseio.com/",
+    projectId: "TU_PROJECT_ID",
+    storageBucket: "TU_BUCKET.appspot.com",
+    messagingSenderId: "TU_SENDER_ID",
+    appId: "TU_APP_ID"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  // --- Generar un ID único para cada usuario (o usar UID real si tienes Auth) ---
+  const userId = "usuario_" + Math.floor(Math.random()*1000000);
+  const userRef = ref(db, 'usuariosActivos/' + userId);
+
+  // --- Registrar usuario activo ---
+  set(userRef, {
+    nombre: userId,
+    conectado: true,
+    lastSeen: Date.now()
+  });
+
+  // --- Eliminar usuario al desconectarse automáticamente ---
+  onDisconnect(userRef).remove();
+
+  // --- Actualizar lastSeen cada 10 segundos mientras esté activo ---
+  setInterval(() => {
+    set(userRef, {
+      nombre: userId,
+      conectado: true,
+      lastSeen: Date.now()
+    });
+  }, 10000);
+
+  console.log("Usuario registrado en tiempo real:", userId);
+</script>
+
+
+
+<!-- BLOQUEO REMOTO DEFINITIVO -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-database.js";
+
+// --- Configuración Firebase ---
+const firebaseConfig = {
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_AUTH_DOMAIN",
+  databaseURL: "https://music-76fda-default-rtdb.firebaseio.com/",
+  projectId: "TU_PROJECT_ID",
+  storageBucket: "TU_BUCKET.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const bloqueoRef = ref(db, 'bloqueoApp');
+
+// --- Crear overlay permanente ---
+let layer = document.getElementById('blockLayer');
+if(!layer){
+  layer = document.createElement('div');
+  layer.id = 'blockLayer';
+  layer.style.cssText = `
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.97);
+    color: #fff;
+    font-size: 2em;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 999999;
+    animation: fadeIn 1s ease-in-out;
+  `;
+  layer.innerHTML = `<span id="blockMessage">🚫 App bloqueada<br>Estamos en mantenimiento   gracias por su comprensión  </span>`;
+  document.body.appendChild(layer);
+}
+
+// --- Animaciones ---
+const style = document.createElement('style');
+style.innerHTML = `
+@keyframes fadeIn {
+  0% {opacity: 0; transform: scale(0.8);}
+  100% {opacity: 1; transform: scale(1);}
+}
+#blockMessage {
+  text-align: center;
+  animation: pulse 1.5s infinite alternate;
+}
+@keyframes pulse {
+  0% {transform: scale(1); color: #ff5555;}
+  50% {transform: scale(1.1); color: #ff2222;}
+  100% {transform: scale(1); color: #ff5555;}
+}
+`;
+document.head.appendChild(style);
+
+// --- Funciones de bloqueo/desbloqueo ---
+function bloquearApp() {
+  layer.style.display = 'flex';
+  // Pausar audio y video
+  const medias = document.querySelectorAll('audio, video');
+  medias.forEach(m => {
+    m.pause();
+    // Evitar que el usuario reproduzca manualmente
+    const blockPlay = () => m.pause();
+    m.addEventListener('play', blockPlay);
+    // Guardar listener para remover luego
+    m._blockPlayListener = blockPlay;
+  });
+}
+
+function desbloquearApp() {
+  layer.style.display = 'none';
+  const medias = document.querySelectorAll('audio, video');
+  medias.forEach(m => {
+    if(m._blockPlayListener) m.removeEventListener('play', m._blockPlayListener);
+  });
+}
+
+// --- Escucha remota en tiempo real ---
+onValue(bloqueoRef, snapshot => {
+  const value = snapshot.val();
+  if(value === true) bloquearApp();
+  else desbloquearApp();
+});
+
+// --- Seguridad extra: Rechequeo cada 1s ---
+setInterval(() => {
+  const value = document.querySelector('#blockLayer').style.display === 'flex';
+  if(value){
+    const medias = document.querySelectorAll('audio, video');
+    medias.forEach(m => m.pause());
+  }
+}, 1000);
+</script>
+<!-- FIN BLOQUEO REMOTO DEFINITIVO -->
+
+<div id="loading">Cargando música...</div>
+
+<script>
+const vP = document.getElementById('vP');
+const fullscreenVideo = document.getElementById('fullscreen-video');
+const bar = document.getElementById('bar');
+const center = document.getElementById('center');
+const drivingChk = document.getElementById('driving');
+const fullscreenContainer = document.getElementById('fullscreen-container');
+const filtersContainer = document.getElementById('filters');
+const loadingIndicator = document.getElementById('loading');
+
+let PLAYLIST = [];
+let FILTERED_PLAYLIST = [];
+let idx = parseInt(localStorage.getItem('carIdx') || 0);
+let isMuted = localStorage.getItem('carMuted') === 'true';
+let currentTime = 0;
+let isFullscreen = false;
+let currentGenre = 'all';
+let controlsTimeout;
+let isSwitchingTrack = false;
+
+const GENRE_FOLDERS = {
+  'Latinoamericana': [{ name: 'Latinoamericana', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/Aya.c/refs/heads/main/jsskkkk.json ' }],
+  'Baladas': [
+    { name: 'Baladas de Oro', url: 'https://archive.org/download/xd_20251013/bsss.json ' },
+    { name: 'Baladas', url: 'https://archive.org/download/xd_20251013/blss.json ' }
+  ],
+  'Folclore': [{ name: 'Ayllus', url: 'https://archive.org/download/xd_20251013/jssk.json ' }],
+  'Pop': [{ name: 'Divas', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/Dip.o.p/refs/heads/main/jsskk.json ' }],
+  'Grupero': [{ name: 'Cumbias sureñas', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/Grp/refs/heads/main/jsskkk.json ' }],
+  'Rock': [{ name: 'Rock', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/rr/refs/heads/main/rc.json ' }],
+  'Bachata': [{ name: 'Bachata', url: 'https://archive.org/download/vvvvvvvx/Bchvvc.json ' }],
+  'tecno': [{ name: 'Electrónica Teckno ', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/Tcno/refs/heads/main/TcElec.json ' }],
+  'Salsa': [{ name: 'Salsa Clásica', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/Ccc/refs/heads/main/Sssss.json ' }],
+  'Boleros ': [{ name: 'Cantineros', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/Bo../refs/heads/main/Bol..json ' }],
+  '80s 90s': [{ name: 'rock en ingles ', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/Ringles/refs/heads/main/Ringles.json ' }],
+  'cumbias': [{ name: 'Cumbias de ayer y hoy', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/q./refs/heads/main/q...json ' }],
+  'Criolla': [{ name: 'Musica Criolla ', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/Crll/refs/heads/main/C.lla.json ' }],
+  'Disco': [{ name: 'Italo disco', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/Dic..c/refs/heads/main/Idisco.json ' }],
+  'huaynos': [{ name: 'huaynos', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/Hyns/refs/heads/main/hyn.json ' }],
+  'Baladas En español': [{ name: 'Norteñas', url: 'https://archive.org/download/xd_20251013/blss.json ' }],
+  'Reguetón': [{ name: 'Clasicos del Regueton', url: 'https://raw.githubusercontent.com/refinadorlegendary-rgb/Rgmp/refs/heads/main/rgtnnns.json ' }]
+};
+
+async function loadAllMusic() {
+  loadingIndicator.style.display = 'block';
+  PLAYLIST = [];
+  try {
+    const genrePromises = Object.entries(GENRE_FOLDERS).map(async ([genre, folders]) => {
+      for (const folder of folders) {
+        try {
+          const response = await fetch(folder.url);
+          const data = await response.json();
+          const songs = data.map((item, index) => ({
+            title: item.nombre || item.name || item.title || item.titulo || (typeof item === 'string' ? item : `Canción ${index + 1}`),
+            video: item.url || item.video || item.src || '',
+            thumb: item.thumb || item.thumbnail || item.image || `https://picsum.photos/320/180?random=${PLAYLIST.length + index}`,
+            genre,
+            folder: folder.name
+          }));
+          PLAYLIST.push(...songs);
+        } catch {
+          const exampleSongs = Array.from({length: 3}, (_, i) => ({
+            title: `${folder.name} - Canción ${i+1}`,
+            video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
+            thumb: `https://picsum.photos/320/180?random=${PLAYLIST.length + i}`,
+            genre,
+            folder: folder.name
+          }));
+          PLAYLIST.push(...exampleSongs);
+        }
+      }
+    });
+    await Promise.all(genrePromises);
+  } finally {
+    loadingIndicator.style.display = 'none';
+    init();
+  }
+}
+
+function setupVideoAspectRatio(videoElement) {
+  videoElement.onloadedmetadata = function() {
+    const videoRatio = videoElement.videoWidth / videoElement.videoHeight;
+    const screenRatio = window.innerWidth / window.innerHeight;
+    fullscreenContainer.classList.remove('video-landscape', 'video-portrait');
+    if (videoRatio > screenRatio * 1.2) fullscreenContainer.classList.add('video-landscape');
+    else if (videoRatio < screenRatio * 0.8) fullscreenContainer.classList.add('video-portrait');
+  };
+}
+
+function hideControlsAfterDelay() {
+  clearTimeout(controlsTimeout);
+  const controls = document.getElementById('fullscreen-controls');
+  if (controls && fullscreenContainer.classList.contains('active')) {
+    controlsTimeout = setTimeout(() => controls.style.opacity = '0', 2000);
+  }
+}
+
+function showControlsTemporarily() {
+  const controls = document.getElementById('fullscreen-controls');
+  if (controls) {
+    controls.style.opacity = '1';
+    hideControlsAfterDelay();
+  }
+}
+
+function saveTime() {
+  return isFullscreen ? fullscreenVideo.currentTime : vP.currentTime;
+}
+
+function loadTime(t) {
+  if (isFullscreen) fullscreenVideo.currentTime = t;
+  else vP.currentTime = t;
+}
+
+function playActive() {
+  if (isFullscreen) {
+    fullscreenVideo.play().catch(e => console.error('Error reproduciendo video fullscreen:', e));
+    vP.pause();
+  } else {
+    vP.play().catch(e => console.error('Error reproduciendo video:', e));
+    fullscreenVideo.pause();
+  }
+}
+
+function pausePlayer() {
+  if (isFullscreen) fullscreenVideo.pause();
+  else vP.pause();
+}
+
+function loadTrack(i, t = 0) {
+  if (isSwitchingTrack) return;
+  isSwitchingTrack = true;
+  idx = i;
+  const item = FILTERED_PLAYLIST[idx];
+  if (!item) { isSwitchingTrack = false; return; }
+  currentTime = saveTime();
+  if (isFullscreen) fullscreenVideo.pause();
+  else vP.pause();
+  setTimeout(() => {
+    vP.src = item.video;
+    fullscreenVideo.src = item.video;
+    const currentVideo = isFullscreen ? fullscreenVideo : vP;
+    setupVideoAspectRatio(currentVideo);
+    currentVideo.onloadedmetadata = () => {
+      loadTime(t);
+      playActive();
+      updateMuteButton();
+      console.log('▶ Reproduciendo:', item.title);
+      isSwitchingTrack = false;
+    };
+    currentVideo.onerror = () => {
+      console.error('Error cargando video:', item.video);
+      isSwitchingTrack = false;
+    };
+    currentVideo.onended = () => nextTrack(); // ✅ YA ESTABA AQUÍ
+    renderList();
+    updateDriveMode();
+    localStorage.setItem('carIdx', idx);
+  }, 50);
+}
+
+function nextTrack() {
+  loadTrack((idx + 1) % FILTERED_PLAYLIST.length);
+}
+
+function prevTrack() {
+  loadTrack((idx - 1 + FILTERED_PLAYLIST.length) % FILTERED_PLAYLIST.length);
+}
+
+function filterByGenre(genre) {
+  currentGenre = genre;
+  FILTERED_PLAYLIST = genre === 'all' ? [...PLAYLIST] : PLAYLIST.filter(track => track.genre === genre);
+  document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.genre === genre));
+  if (idx >= FILTERED_PLAYLIST.length) idx = 0;
+  renderList();
+  if (FILTERED_PLAYLIST.length > 0) loadTrack(idx);
+}
+
+function renderList() {
+  center.innerHTML = '';
+  const countInfo = document.createElement('div');
+  countInfo.style.padding = '1vh';
+  countInfo.style.fontSize = '2.5vh';
+  countInfo.style.color = 'var(--accent)';
+  countInfo.textContent = `Mostrando ${FILTERED_PLAYLIST.length} canciones${currentGenre !== 'all' ? ` de ${currentGenre}` : ''}`;
+  center.appendChild(countInfo);
+  FILTERED_PLAYLIST.forEach((tr, i) => {
+    const d = document.createElement('div');
+    d.className = 'track' + (i === idx ? ' active' : '');
+    d.innerHTML = `
+      <img src="${tr.thumb}" onerror="this.src='https://picsum.photos/320/180?random=${i}'">
+      <div class="track-info">
+        <div class="track-title">${tr.title}</div>
+        <div class="track-genre">${tr.genre} • ${tr.folder}</div>
+      </div>
+    `;
+    d.onclick = () => loadTrack(i);
+    center.appendChild(d);
+  });
+  setTimeout(() => {
+    const activeTrack = center.querySelector('.track.active');
+    if (activeTrack) activeTrack.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
+}
+
+function createGenreFilters() {
+  const allBtn = document.querySelector('.filter-btn[data-genre="all"]');
+  allBtn.onclick = () => filterByGenre('all');
+  const uniqueGenres = [...new Set(PLAYLIST.map(track => track.genre))];
+  uniqueGenres.forEach(genre => {
+    const btn = document.createElement('button');
+    btn.className = 'filter-btn';
+    btn.dataset.genre = genre;
+    btn.textContent = `${genre} (${PLAYLIST.filter(t => t.genre === genre).length})`;
+    btn.onclick = () => filterByGenre(genre);
+    filtersContainer.appendChild(btn);
+  });
+}
+
+function updateDriveMode() {
+  const drv = drivingChk.checked;
+  if (drv) {
+    document.body.classList.add('audio-only');
+    vP.muted = isMuted;
+    fullscreenVideo.muted = isMuted;
+  } else {
+    document.body.classList.remove('audio-only');
+    vP.muted = isMuted;
+    fullscreenVideo.muted = isMuted;
+  }
+  updateMuteButton();
+}
+
+function toggleMute() {
+  isMuted = !isMuted;
+  vP.muted = isMuted;
+  fullscreenVideo.muted = isMuted;
+  localStorage.setItem('carMuted', isMuted);
+  updateMuteButton();
+}
+
+function updateMuteButton() {
+  const muteBtn = document.getElementById('toggleMute');
+  const fsMuteBtn = document.getElementById('fs-mute');
+  const currentMuted = isFullscreen ? fullscreenVideo.muted : vP.muted;
+  muteBtn.textContent = currentMuted ? '🔇' : '🔊';
+  if (fsMuteBtn) fsMuteBtn.textContent = currentMuted ? '🔇' : '🔊';
+}
+
+function enterFullscreen() {
+  isFullscreen = true;
+  fullscreenVideo.currentTime = vP.currentTime;
+  fullscreenVideo.muted = vP.muted;
+  fullscreenVideo.volume = vP.volume;
+  vP.pause();
+  fullscreenContainer.classList.add('active');
+  setupVideoAspectRatio(fullscreenVideo);
+  showControlsTemporarily();
+  setTimeout(() => {
+    fullscreenVideo.play().catch(() => console.log('Esperando interacción del usuario para reproducir en fullscreen'));
+  }, 100);
+  updateFullscreenControls();
+}
+
+function exitFullscreen() {
+  isFullscreen = false;
+  vP.currentTime = fullscreenVideo.currentTime;
+  fullscreenVideo.pause();
+  fullscreenContainer.classList.remove('active');
+  clearTimeout(controlsTimeout);
+  setTimeout(() => {
+    vP.play().catch(e => console.error('Error al reanudar video normal:', e));
+  }, 100);
+  updateFullscreenControls();
+}
+
+function updateFullscreenControls() {
+  const fsPlayBtn = document.getElementById('fs-play');
+  const currentVideo = isFullscreen ? fullscreenVideo : vP;
+  if (fsPlayBtn) fsPlayBtn.textContent = currentVideo.paused ? '▶' : '◼️';
+}
+
+function updateProgressBar() {
+  const currentVideo = isFullscreen ? fullscreenVideo : vP;
+  if (currentVideo.duration && !isNaN(currentVideo.duration)) {
+    bar.style.width = (100 * currentVideo.currentTime / currentVideo.duration) + '%';
+  }
+}
+
+document.getElementById('play').onclick = () => {
+  const currentVideo = isFullscreen ? fullscreenVideo : vP;
+  if (currentVideo.paused) {
+    playActive();
+    document.getElementById('play').textContent = '◼️';
+  } else {
+    pausePlayer();
+    document.getElementById('play').textContent = '▶';
+  }
+  updateFullscreenControls();
+};
+document.getElementById('next').onclick = nextTrack;
+document.getElementById('prev').onclick = prevTrack;
+document.getElementById('toggleMute').onclick = toggleMute;
+document.getElementById('fullscreen').onclick = enterFullscreen;
+drivingChk.onchange = updateDriveMode;
+document.getElementById('fs-prev').onclick = (e) => { prevTrack(); showControlsTemporarily(); e.stopPropagation(); };
+document.getElementById('fs-next').onclick = (e) => { nextTrack(); showControlsTemporarily(); e.stopPropagation(); };
+document.getElementById('fs-play').onclick = (e) => {
+  const currentVideo = isFullscreen ? fullscreenVideo : vP;
+  if (currentVideo.paused) playActive(); else pausePlayer();
+  updateFullscreenControls();
+  showControlsTemporarily();
+  e.stopPropagation();
+};
+document.getElementById('fs-mute').onclick = (e) => { toggleMute(); showControlsTemporarily(); e.stopPropagation(); };
+document.getElementById('fs-exit').onclick = (e) => { exitFullscreen(); e.stopPropagation(); };
+fullscreenContainer.addEventListener('click', showControlsTemporarily);
+fullscreenContainer.addEventListener('mousemove', showControlsTemporarily);
+document.getElementById('progress').onclick = e => {
+  const r = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - r.left) / r.width;
+  const currentVideo = isFullscreen ? fullscreenVideo : vP;
+  if (currentVideo.duration && !isNaN(currentVideo.duration)) currentVideo.currentTime = pct * currentVideo.duration;
+};
+
+function setupVideoEvents(videoElement, isFs) {
+  videoElement.onplay = () => {
+    if (!isFs) document.getElementById('play').textContent = '◼️';
+    updateFullscreenControls();
+  };
+  videoElement.onpause = () => {
+    if (!isFs) document.getElementById('play').textContent = '▶';
+    updateFullscreenControls();
+  };
+  videoElement.onended = () => nextTrack(); // ✅ ESTA LÍNEA AHORA TAMBIÉN ACTÚA EN FULLSCREEN
+}
+
+setInterval(updateProgressBar, 500);
+
+function init() {
+  createGenreFilters();
+  filterByGenre('all');
+  if (FILTERED_PLAYLIST.length > 0) loadTrack(idx);
+  vP.muted = isMuted;
+  fullscreenVideo.muted = isMuted;
+  updateMuteButton();
+  setupVideoEvents(vP, false);
+  setupVideoEvents(fullscreenVideo, true);
+  vP.ontimeupdate = updateProgressBar;
+  fullscreenVideo.ontimeupdate = updateProgressBar;
+}
+
+loadAllMusic();
+</script>
+</body>
+</html>
